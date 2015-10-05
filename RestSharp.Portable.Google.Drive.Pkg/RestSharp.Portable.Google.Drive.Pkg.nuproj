@@ -22,15 +22,14 @@
   <Import Project="$(NuProjPath)\NuProj.props" Condition="Exists('$(NuProjPath)\NuProj.props')" />
   <PropertyGroup Label="Configuration">
     <Id>RestSharp.Portable.Google.Drive</Id>
-    <Version>0.5.0-beta01</Version>
-    <Title>RestSharp.Portable.Google.Drive</Title>
+    <Version>0.5.0-beta02</Version>
+    <Title>Portable Google Drive API using RestSharp.Portable</Title>
     <Authors>Fubar Development Junker</Authors>
     <Owners>Fubar Development Junker</Owners>
     <Summary>
     </Summary>
     <Description>Portable Google Drive API using RestSharp.Portable</Description>
-    <ReleaseNotes>
-    </ReleaseNotes>
+    <ReleaseNotes>Reduce dependencies</ReleaseNotes>
     <ProjectUrl>https://github.com/FubarDevelopment/RestSharp.Portable.Google.Drive</ProjectUrl>
     <LicenseUrl>http://opensource.org/licenses/MIT</LicenseUrl>
     <Copyright>Copyright © 2015 Fubar Development Junker</Copyright>
