@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
 using JetBrains.Annotations;
+
+using Newtonsoft.Json;
 
 using RestSharp.Portable.Google.Drive.Model;
 
@@ -17,15 +21,30 @@ namespace RestSharp.Portable.Google.Drive
     /// </summary>
     public sealed class GoogleDriveService : IDisposable
     {
+        /// <summary>
+        /// The Google API scheme/host
+        /// </summary>
+        public static readonly string GoogleApi = "https://www.googleapis.com/";
+        
+        /// <summary>
+        /// The base path for the Google Drive API
+        /// </summary>
+        public static readonly string DriveApiPath = "drive/v2/";
+
         private static readonly ISerializer RestSerializer = new ConservativeJsonSerializer();
 
-        private static readonly string DriveApiPath = "drive/v2/";
-
         private static readonly string DriveUploadApiPath = "upload/" + DriveApiPath;
+
+        private static readonly PropertyInfo _contentLengthProperty;
 
         private readonly IRequestFactory _restClientFactory;
 
         private readonly IRestClient _restClient;
+
+        static GoogleDriveService()
+        {
+            _contentLengthProperty = typeof(HttpWebRequest).GetRuntimeProperty("ContentLength");
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="GoogleDriveService"/> class.
@@ -164,6 +183,53 @@ namespace RestSharp.Portable.Google.Drive
         }
 
         /// <summary>
+        /// Update a files contents
+        /// </summary>
+        /// <param name="file">The file to update</param>
+        /// <param name="input">The new file data</param>
+        /// <param name="cancellationToken">The cancellation token</param>
+        /// <returns>The updated <see cref="File"/> metadata</returns>
+        public Task<File> UploadAsync([NotNull] File file, [NotNull] Stream input, CancellationToken cancellationToken)
+        {
+            var mimeType = string.IsNullOrEmpty(file.MimeType) ? MimeTypes.GetMimeType(file.Title) : file.MimeType;
+            return UploadAsync(file.Id, input, mimeType, cancellationToken);
+        }
+
+        /// <summary>
+        /// Update a files contents
+        /// </summary>
+        /// <param name="fileId">The ID of the file to update</param>
+        /// <param name="input">The new file data</param>
+        /// <param name="mimeType">The mime type of the data</param>
+        /// <param name="cancellationToken">The cancellation token</param>
+        /// <returns>The updated <see cref="File"/> metadata</returns>
+        public async Task<File> UploadAsync([NotNull] string fileId, [NotNull] Stream input, [CanBeNull] string mimeType, CancellationToken cancellationToken)
+        {
+            var uploadUrl = new Uri($"{GoogleApi}{DriveUploadApiPath}files/{fileId}");
+            var request = await _restClientFactory.CreateWebRequest(uploadUrl);
+            request.Method = "PUT";
+            if (mimeType != null)
+                request.ContentType = mimeType;
+            if (_contentLengthProperty != null)
+                _contentLengthProperty.SetValue(request, input.Length);
+            else
+                request.Headers[HttpRequestHeader.ContentLength] = input.Length.ToString(CultureInfo.InvariantCulture);
+            using (var requestStream = await Task.Factory.FromAsync<Stream>(request.BeginGetRequestStream, request.EndGetRequestStream, null))
+            {
+                await input.CopyToAsync(requestStream, 262144, cancellationToken);
+                await requestStream.FlushAsync(cancellationToken);
+            }
+            using (var response = (HttpWebResponse)await Task.Factory.FromAsync<WebResponse>(request.BeginGetResponse, request.EndGetResponse, null))
+            {
+                using (var responseStream = response.GetResponseStream())
+                {
+                    var serializer = new JsonSerializer();
+                    return serializer.Deserialize<File>(new JsonTextReader(new StreamReader(responseStream)));
+                }
+            }
+        }
+
+        /// <summary>
         /// Upload a file
         /// </summary>
         /// <remarks>
@@ -235,20 +301,14 @@ namespace RestSharp.Portable.Google.Drive
                     if (temp == null || temp.Length != size)
                         temp = new byte[size];
                     Array.Copy(buffer, temp, size);
+
                     var requestUploadChunk = CreateRequest(sessionUri, Method.PUT);
-                    //requestUploadChunk.AddHeader("Content-Length", size);
-                    //requestUploadChunk.AddHeader("Content-Type", mimeType);
                     requestUploadChunk.AddHeader("Content-Range", requestRange.ToString(requestRange.RangeItems.Single(), length));
                     requestUploadChunk.AddParameter(string.Empty, temp, ParameterType.RequestBody, mimeType);
 
                     var responseUploadChunk = await uploadClient.Execute(requestUploadChunk, cancellationToken);
                     if (!responseUploadChunk.IsSuccess && responseUploadChunk.StatusCode != (HttpStatusCode)308)
                         throw new WebException(responseUploadChunk.StatusDescription, WebExceptionStatus.UnknownError);
-                    IEnumerable<string> rangeValue;
-                    if (responseUploadChunk.Headers.TryGetValues("Range", out rangeValue))
-                    {
-                        size = (int)HttpRange.Parse(rangeValue.Single()).Normalize(length).Sum(x => x.Length);
-                    }
                 }
             }
         }
@@ -319,12 +379,40 @@ namespace RestSharp.Portable.Google.Drive
         /// <param name="cancellationToken"></param>
         /// <returns>The new subfolder metadata</returns>
         [NotNull]
-        public async Task<File> CreateDirectoryAsync([NotNull] File folder, [NotNull] string name, CancellationToken cancellationToken)
+        public Task<File> CreateDirectoryAsync([NotNull] File folder, [NotNull] string name, CancellationToken cancellationToken)
+        {
+            return CreateItemAsync(folder, name, FileExtensions.DirectoryMimeType, cancellationToken);
+        }
+
+        /// <summary>
+        /// Create a new item (file or folder)
+        /// </summary>
+        /// <param name="folder">The <see cref="File"/> (folder) to create the subfolder in</param>
+        /// <param name="name">The new subfolder name</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>The new subfolder metadata</returns>
+        [NotNull]
+        public Task<File> CreateItemAsync([NotNull] File folder, [NotNull] string name, CancellationToken cancellationToken)
+        {
+            var mimeType = MimeTypes.GetMimeType(name);
+            return CreateItemAsync(folder, name, mimeType, cancellationToken);
+        }
+
+        /// <summary>
+        /// Create a new item (file or folder)
+        /// </summary>
+        /// <param name="folder">The <see cref="File"/> (folder) to create the subfolder in</param>
+        /// <param name="name">The new subfolder name</param>
+        /// <param name="mimeType">The mime type of the new item</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>The new subfolder metadata</returns>
+        [NotNull]
+        public async Task<File> CreateItemAsync([NotNull] File folder, [NotNull] string name, [NotNull] string mimeType, CancellationToken cancellationToken)
         {
             var newItem = new File()
             {
                 Title = name,
-                MimeType = FileExtensions.DirectoryMimeType,
+                MimeType = mimeType,
                 Parents = new List<ParentReference>
                         {
                             new ParentReference()
