@@ -8,10 +8,14 @@ using System.Runtime.InteropServices;
 // die einer Assembly zugeordnet sind.
 [assembly: AssemblyTitle("RestSharp.Portable.Google.Drive")]
 [assembly: AssemblyDescription("")]
-[assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("RestSharp.Portable.Google.Drive")]
-[assembly: AssemblyCopyright("Copyright ©  2015")]
+#if DEBUG
+[assembly: AssemblyConfiguration("Debug")]
+#else
+[assembly: AssemblyConfiguration("Release")]
+#endif
+[assembly: AssemblyCompany("Fubar Development Junker")]
+[assembly: AssemblyProduct("Google Drive API for RestSharp.Portable")]
+[assembly: AssemblyCopyright("Copyright © 2015 Fubar Development Junker")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: NeutralResourcesLanguage("de")]
@@ -26,5 +30,5 @@ using System.Runtime.InteropServices;
 // Sie können alle Werte angeben oder die standardmäßigen Build- und Revisionsnummern 
 // übernehmen, indem Sie "*" eingeben:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.0.0.*")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
