@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -57,6 +58,94 @@ namespace RestSharp.Portable.Google.Drive
         }
 
         /// <summary>
+        /// Appends parts to a path
+        /// </summary>
+        /// <param name="path">The path to append to</param>
+        /// <param name="parts">The parts to append</param>
+        /// <returns>The </returns>
+        public static string CombinePath(string path, params string[] parts)
+        {
+            return CombinePath(path, (IEnumerable<string>)parts);
+        }
+
+        /// <summary>
+        /// Appends parts to a path
+        /// </summary>
+        /// <param name="path">The path to append to</param>
+        /// <param name="parts">The parts to append</param>
+        /// <returns>The </returns>
+        public static string CombinePath(string path, IEnumerable<string> parts)
+        {
+            var result = new StringBuilder();
+            bool addSlash;
+            if (!string.IsNullOrEmpty(path))
+            {
+                result.Append(path);
+                addSlash = !path.EndsWith("/");
+            }
+            else
+            {
+                addSlash = false;
+            }
+            foreach (var part in parts)
+            {
+                if (addSlash)
+                    result.Append('/');
+                else
+                    addSlash = true;
+                result.Append(part.Replace("\\", "\\\\").Replace("/", "\\/"));
+            }
+            return result.ToString();
+        }
+
+        /// <summary>
+        /// Split the path into parts
+        /// </summary>
+        /// <param name="path">The path to split</param>
+        /// <returns>The parts of the path</returns>
+        public static IReadOnlyList<string> SplitPath(string path)
+        {
+            var parts = new List<string>();
+            if (string.IsNullOrEmpty(path))
+                return parts;
+            var isEscaped = false;
+            var partCollector = new StringBuilder();
+            foreach (var ch in path.ToCharArray())
+            {
+                if (!isEscaped)
+                {
+                    if (ch == '\\')
+                    {
+                        isEscaped = true;
+                    }
+                    else if (ch == '/')
+                    {
+                        parts.Add(partCollector.ToString());
+                        partCollector.Clear();
+                    }
+                    else
+                    {
+                        partCollector.Append(ch);
+                    }
+                }
+                else
+                {
+                    if (ch == '/' || ch == '\\')
+                    {
+                        partCollector.Append(ch);
+                    }
+                    else
+                    {
+                        partCollector.Append('\\').Append(ch);
+                    }
+                    isEscaped = false;
+                }
+            }
+            parts.Add(partCollector.ToString());
+            return parts;
+        }
+
+            /// <summary>
         /// The <code>about</code> request to get some basic information about the
         /// Google Drive service to use.
         /// </summary>
@@ -438,10 +527,7 @@ namespace RestSharp.Portable.Google.Drive
         {
             var current = folder;
             var nameComparer = StringComparer.OrdinalIgnoreCase;
-            var folderParts = path.Split(new[]
-            {
-                '/', '\\'
-            }, StringSplitOptions.RemoveEmptyEntries);
+            var folderParts = SplitPath(path).Where(x => !string.IsNullOrEmpty(x));
             foreach (var folderPart in folderParts)
             {
                 var foldersRequest = CreateRequest("files");
