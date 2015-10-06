@@ -516,6 +516,20 @@ namespace RestSharp.Portable.Google.Drive
         }
 
         /// <summary>
+        /// Find a child item by name 
+        /// </summary>
+        /// <param name="folder">The folder to search in</param>
+        /// <param name="fileName">The name to search for</param>
+        /// <param name="cancellationToken"/>
+        /// <returns>The list of found items</returns>
+        public async Task<IReadOnlyList<File>> FindChildByNameAsync(File folder, string fileName, CancellationToken cancellationToken)
+        {
+            IRestRequest request = this.CreateRequest("files");
+            request.AddParameter("q", $"'{folder.Id.Escape()}' in parents and title='{fileName.Escape()}'");
+            return (await _restClient.Execute<ResourceList<File>>(request, cancellationToken)).Data.Items;
+        }
+
+        /// <summary>
         /// Get or create the subfolder the <paramref name="folder"/> and <paramref name="path"/> are pointing to
         /// </summary>
         /// <param name="folder">The base <see cref="File"/> (folder)</param>
