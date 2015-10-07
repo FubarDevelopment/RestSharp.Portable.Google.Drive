@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>RestSharp.Portable.Google.Drive</id>
+    <version>0.5.0-beta07</version>
+    <title>Portable Google Drive API using RestSharp.Portable</title>
+    <authors>Fubar Development Junker</authors>
+    <owners>Fubar Development Junker</owners>
+    <licenseUrl>http://opensource.org/licenses/MIT</licenseUrl>
+    <projectUrl>https://github.com/FubarDevelopment/RestSharp.Portable.Google.Drive</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Portable Google Drive API using RestSharp.Portable</description>
+    <releaseNotes>Reduce dependencies</releaseNotes>
+    <copyright>Copyright © 2015 Fubar Development Junker</copyright>
+    <tags>RestSharp Portable Google Drive</tags>
+    <dependencies>
+      <dependency id="FubarCoder.RestSharp.Portable.OAuth2" version="3.0.0-beta06" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="..\LICENSE.md" target="LICENSE.md" />
+    <file src="..\README.md" target="README.md" />
+    <file src="bin\$Configuration$\RestSharp.Portable.Google.Drive.dll" target="lib\portable-net45+dnxcore50+win+wpa81+wp80+MonoAndroid10+xamarinios10+MonoTouch10\" />
+    <file src="bin\$Configuration$\RestSharp.Portable.Google.Drive.xml" target="lib\portable-net45+dnxcore50+win+wpa81+wp80+MonoAndroid10+xamarinios10+MonoTouch10\" />
+  </files>
+</package>
