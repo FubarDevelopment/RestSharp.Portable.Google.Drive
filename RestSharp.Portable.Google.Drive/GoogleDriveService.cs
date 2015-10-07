@@ -280,7 +280,7 @@ namespace RestSharp.Portable.Google.Drive
         /// <returns>The updated <see cref="File"/> metadata</returns>
         public Task<File> UploadAsync([NotNull] File file, [NotNull] Stream input, CancellationToken cancellationToken)
         {
-            var mimeType = FixMimeType(string.IsNullOrEmpty(file.MimeType) ? MimeTypes.GetMimeType(file.Title) : file.MimeType);
+            var mimeType = string.IsNullOrEmpty(file.MimeType) ? MimeTypes.GetMimeType(file.Title) : file.MimeType;
             return UploadAsync(file.Id, input, mimeType, cancellationToken);
         }
 
@@ -331,7 +331,7 @@ namespace RestSharp.Portable.Google.Drive
         /// <returns>The <see cref="Task"/></returns>
         public Task UploadAsync([NotNull] string folderId, [NotNull] string name, [NotNull] Stream input, CancellationToken cancellationToken)
         {
-            var mimeType = FixMimeType(MimeTypes.GetMimeType(name));
+            var mimeType = MimeTypes.GetMimeType(name);
             return UploadAsync(folderId, name, input, mimeType, cancellationToken);
         }
 
@@ -483,7 +483,7 @@ namespace RestSharp.Portable.Google.Drive
         [NotNull]
         public Task<File> CreateItemAsync([NotNull] File folder, [NotNull] string name, CancellationToken cancellationToken)
         {
-            var mimeType = FixMimeType(MimeTypes.GetMimeType(name));
+            var mimeType = MimeTypes.GetMimeType(name);
             return CreateItemAsync(folder, name, mimeType, cancellationToken);
         }
 
@@ -604,12 +604,5 @@ namespace RestSharp.Portable.Google.Drive
             Dispose(true);
         }
         #endregion
-
-        private string FixMimeType(string mimeType)
-        {
-            if (mimeType == "text/plain")
-                mimeType = "application/octet-stream";
-            return mimeType;
-        }
     }
 }
