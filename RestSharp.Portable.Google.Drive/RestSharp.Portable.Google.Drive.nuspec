@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
   <metadata>
-    <id>RestSharp.Portable.Google.Drive</id>
-    <version>0.5.0-beta08</version>
+    <id>$id$</id>
+    <version>0.6.0-beta01</version>
     <title>Portable Google Drive API using RestSharp.Portable</title>
     <authors>Fubar Development Junker</authors>
     <owners>Fubar Development Junker</owners>
@@ -20,7 +20,5 @@
   <files>
     <file src="..\LICENSE.md" target="LICENSE.md" />
     <file src="..\README.md" target="README.md" />
-    <file src="bin\$Configuration$\RestSharp.Portable.Google.Drive.dll" target="lib\portable-net45+dnxcore50+win+wpa81+wp80+MonoAndroid10+xamarinios10+MonoTouch10\" />
-    <file src="bin\$Configuration$\RestSharp.Portable.Google.Drive.xml" target="lib\portable-net45+dnxcore50+win+wpa81+wp80+MonoAndroid10+xamarinios10+MonoTouch10\" />
   </files>
 </package>
