@@ -228,6 +228,22 @@ namespace RestSharp.Portable.Google.Drive
         }
 
         /// <summary>
+        /// Update the file metadata
+        /// </summary>
+        /// <param name="itemId">The ID of the item to update</param>
+        /// <param name="newItemValues">The values to update</param>
+        /// <param name="cancellationToken">The cancellation token</param>
+        /// <returns>The modified item</returns>
+        public async Task<File> UpdateAsync([NotNull] string itemId, [NotNull] File newItemValues, CancellationToken cancellationToken)
+        {
+            var request = CreateRequest($"files/{itemId.Escape()}", Method.PATCH);
+            if (newItemValues.ModifiedDate != null)
+                request.AddParameter("setModifiedDate", "true", ParameterType.QueryString);
+            request.AddBody(newItemValues);
+            return (await _restClient.Execute<File>(request, cancellationToken)).Data;
+        }
+
+        /// <summary>
         /// Get the download URL for a <see cref="File"/>
         /// </summary>
         /// <param name="fileId">The id of the <see cref="File"/> to download</param>
