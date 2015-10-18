@@ -38,6 +38,8 @@ namespace RestSharp.Portable.Google.Drive
 
         private static readonly PropertyInfo _contentLengthProperty;
 
+        private static readonly MethodInfo _addRangeMethod;
+
         private readonly IRequestFactory _restClientFactory;
 
         private readonly IRestClient _restClient;
@@ -45,6 +47,7 @@ namespace RestSharp.Portable.Google.Drive
         static GoogleDriveService()
         {
             _contentLengthProperty = typeof(HttpWebRequest).GetRuntimeProperty("ContentLength");
+            _addRangeMethod = typeof(HttpWebRequest).GetRuntimeMethod("AddRange", new[] { typeof(long) });
         }
 
         /// <summary>
@@ -258,15 +261,25 @@ namespace RestSharp.Portable.Google.Drive
         /// Get a <see cref="HttpWebResponse"/> to download a <see cref="File"/>
         /// </summary>
         /// <param name="file">The <see cref="File"/> to download</param>
-        /// <param name="range">The <see cref="HttpRange"/> to download</param>
+        /// <param name="from">The offset where the download starts from</param>
         /// <param name="cancellationToken"></param>
         /// <returns>The <see cref="HttpWebResponse"/> used to download the file</returns>
-        public async Task<HttpWebResponse> GetDownloadResponseAsync(File file, HttpRange range, CancellationToken cancellationToken)
+        public async Task<HttpWebResponse> GetDownloadResponseAsync(File file, long? from, CancellationToken cancellationToken)
         {
             var downloadUrl = GetDownloadUrl(file);
             var request = await _restClientFactory.CreateWebRequest(new Uri(downloadUrl));
-            if (range != null)
-                request.Headers[HttpRequestHeader.Range] = range.ToString();
+            if (from != null)
+            {
+                if (_addRangeMethod != null)
+                {
+                    _addRangeMethod.Invoke(request, new object[] { from.Value });
+                }
+                else
+                {
+                    var range = new HttpRange("bytes", new HttpRangeItem(from, null));
+                    request.Headers[HttpRequestHeader.Range] = range.ToString();
+                }
+            }
             var response = (HttpWebResponse)await Task.Factory.FromAsync<WebResponse>(request.BeginGetResponse, request.EndGetResponse, null);
             return response;
         }
