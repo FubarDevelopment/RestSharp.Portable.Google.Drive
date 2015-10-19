@@ -14,7 +14,6 @@
     <copyright>Copyright © 2015 Fubar Development Junker</copyright>
     <tags>RestSharp Portable Google Drive</tags>
     <dependencies>
-      <dependency id="FubarCoder.RestSharp.Portable.OAuth2" version="3.0.0-beta06" />
     </dependencies>
   </metadata>
   <files>
