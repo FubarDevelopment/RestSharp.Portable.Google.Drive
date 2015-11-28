@@ -15,7 +15,9 @@ namespace RestSharp.Portable.Google.Drive
         {
             base.ConfigureSerializer(serializer);
             serializer.NullValueHandling = NullValueHandling.Ignore;
-            //serializer.DefaultValueHandling = DefaultValueHandling.Ignore;
+            serializer.DateTimeZoneHandling = DateTimeZoneHandling.Utc;
+            serializer.DateFormatHandling = DateFormatHandling.IsoDateFormat;
+            serializer.DateFormatString = "yyyy-MM-ddTHH:mm:ss.fffZ";
             serializer.ContractResolver = new CamelCasePropertyNamesContractResolver();
         }
     }
